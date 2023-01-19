@@ -1,0 +1,69 @@
+env:
+  # Global env vars for Go build.
+  - 'CGO_ENABLED=0'
+  - 'GO111MODULE=on'
+  - 'GOPROXY=https://proxy.golang.org,direct'
+
+before:
+  hooks:
+    - go mod tidy
+
+# Duplicate the builds to .goreleaser.docker.yaml
+builds:
+  -
+    id: main
+    main: .
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    flags:
+      - '-a'
+      - '-trimpath'
+    goos:
+      - 'linux'
+    goarch:
+      - 'amd64'
+      - 'arm64'
+
+kos:
+-
+  # ID of this image.
+  id: main
+
+  # Build ID that should be used to import the build settings.
+  build: main
+
+  # Platforms to build and publish.
+  #
+  # Defaults to linux/amd64.
+  platforms:
+  - linux/amd64
+  - linux/arm64
+
+  # Tag templates to build and push.
+  #
+  # Defaults to `latest`.
+  tags:
+  - latest
+  - '{{ .Version }}'
+
+
+archives:
+  - format: 'tar.gz'
+    name_template: 'foo_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format_overrides:
+      - goos: 'windows'
+        format: 'zip'
+
+
+checksum:
+  name_template: 'foo_{{ .Version }}_SHA512SUMS'
+  algorithm: 'sha512'
+
+
+changelog:
+  use: github
+  sort: asc
+
+# Release to github.
+release:
+  draft: false
+  mode: replace

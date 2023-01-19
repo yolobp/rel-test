@@ -1,0 +1,15 @@
+# This is the default value. We can override.
+# defaultBaseImage: cgr.dev/chainguard/static
+builds:
+- id: main
+  main: .
+  env:
+  - 'CGO_ENABLED=0'
+  - 'GO111MODULE=on'
+  - 'GOPROXY=https://proxy.golang.org,direct'
+  flags:
+  - '-a'
+  - '-trimpath'
+  ldflags:
+  - -s -w
+  - -extldflags "-static"

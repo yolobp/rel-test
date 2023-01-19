@@ -1,0 +1,43 @@
+name: 'release'
+on:
+  push:
+    tags:
+      - 'v*'
+env:
+  # .goreleaser.docker.yaml reads DOCKER_REPO
+  KO_DOCKER_REPO: 'us-docker.pkg.dev/cshou-jvs/rel-images'
+  WIF_PROVIDER: 'projects/151890305035/locations/global/workloadIdentityPools/canonical-foo-ci/providers/canonical-foo-ci-provider'
+  WIF_SERVICE_ACCOUNT: 'canonical-foo-ci@cshou-jvs.iam.gserviceaccount.com'
+
+# Don't cancel in progress since we don't want to have half-baked release.
+concurrency: '${{ github.workflow }}-${{ github.head_ref || github.ref }}-release'
+
+jobs:
+  release:
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: 'write'
+      packages: 'write'
+    steps:
+      - uses: 'actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8' # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@c4799db9111fba4461e9f9da8732e5057b394f72' # ratchet:google-github-actions/auth@v0
+        with:
+          workload_identity_provider: '${{ env.WIF_PROVIDER }}'
+          service_account: '${{ env.WIF_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
+      - name: 'Authenticate Arifact Registry'
+        run: |-
+          gcloud auth configure-docker us-docker.pkg.dev
+      - uses: 'actions/setup-go@c4a742cab115ed795e34d4513e2cf7d472deb55f' # ratchet:actions/setup-go@v3
+        with:
+          go-version: '1.19'
+      - uses: 'goreleaser/goreleaser-action@v4'
+        with:
+          version: 'v1.14.1' # Manually pinned
+          args: 'release --rm-dist'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'

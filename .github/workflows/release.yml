@@ -18,6 +18,7 @@ jobs:
     permissions:
       contents: 'write'
       packages: 'write'
+      id-token: 'write'
     steps:
       - uses: 'actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8' # ratchet:actions/checkout@v3
         with:
